@@ -1,0 +1,13 @@
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * *" # 毎日12時に実行 (JST)
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: node main.mjs
+    env:
+      NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
