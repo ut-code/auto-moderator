@@ -45,7 +45,7 @@ if (json.results.length === 0) {
           .join("")}`
     )
     .join("\n");
-  message = `<!channel> 3日以内に期限が迫っているタスクがあります！\n${tasks}`;
+  message = `3日以内に期限が迫っているタスクがあります！\n${tasks}`;
 }
 
 await fetch(process.env.SLACK_WEBHOOK_URL, {
