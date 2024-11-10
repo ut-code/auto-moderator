@@ -1,3 +1,5 @@
+const NOTION_TASK_PAGE_URL = "https://www.notion.so/utcode/e8d7215fb5224be4a9a3e7d3be4d41ff?v=cc40d1dc707740eea372fa41a216dc74";
+
 const response = await fetch(
   "https://api.notion.com/v1/databases/e8d7215f-b522-4be4-a9a3-e7d3be4d41ff/query",
   {
@@ -38,14 +40,13 @@ if (json.results.length === 0) {
   const tasks = json.results
     .map(
       (result) =>
-        `・【${
-          result.properties.期日.date.start
+        `・【${result.properties.期日.date.start
         }】${result.properties.タイトル.title
           .map((title) => title.plain_text)
           .join("")}`
     )
     .join("\n");
-  message = `3日以内に期限が迫っているタスクがあります！\n${tasks}`;
+  message = `3日以内に期限が迫っているタスクがあります！\n${tasks}\n\n完了したら、タスクを対応済みにしてください。\n> <${NOTION_TASK_PAGE_URL}|運営タスク>`;
 }
 
 await fetch(process.env.SLACK_WEBHOOK_URL, {
