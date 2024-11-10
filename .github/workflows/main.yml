@@ -7,7 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm start
+      - run: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.1.31
+      - run: bun start
     env:
       NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
