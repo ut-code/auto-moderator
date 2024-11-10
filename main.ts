@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { NotionTypes, Url, checkType } from "./validator";
+import { NotionTypes, TypeChecker, Url, check } from "./validator";
 
 /*
 API REFERENCE:
@@ -48,6 +48,8 @@ const NotionFetchResponse = v.object({
 });
 
 async function main() {
+	const tc = new TypeChecker();
+
 	const response = await fetch("https://api.notion.com/v1/databases/e8d7215f-b522-4be4-a9a3-e7d3be4d41ff/query", {
 		method: "POST",
 		headers: {
@@ -58,7 +60,7 @@ async function main() {
 		body: query,
 	});
 
-	const json = checkType("notion fetch response", await response.json(), NotionFetchResponse);
+	const json = tc.check("notion fetch response", await response.json(), NotionFetchResponse);
 
 	const tasks = json.results
 		.map((result) => {
@@ -69,7 +71,7 @@ async function main() {
 			return `・【${due}】${title} (${assignee})`;
 		})
 		.join("\n");
-	const message =
+	let message =
 		json.results.length === 0
 			? "本日は期限が迫っているタスクはありませんでした。"
 			: `
@@ -80,7 +82,15 @@ ${tasks}
 > <${NOTION_TASK_PAGE_URL}|運営タスク>
 `.trim();
 
-	const webhook = checkType("env SLACK_WEBHOOK_URL", process.env.SLACK_WEBHOOK_URL, Url);
+	if (tc.hasFailed()) message += `---\n 一つ以上の型チェックが失敗しました: ${tc.errors}`;
+
+	// not appending this to messages, as it includes secrets
+	const { err, val: webhook } = check("env SLACK_WEBHOOK_URL", process.env.SLACK_WEBHOOK_URL, Url);
+	if (err) {
+		console.error(`Failed to parse webhook. first and last characters are as follows.
+		first: ${webhook.at(0)}
+		last: ${webhook.at(-1)}`);
+	}
 	await fetch(webhook, {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
