@@ -41,7 +41,7 @@ const NotionFetchResponse = v.object({
       properties: v.object({
         期日: NotionTypes.date,
         タイトル: NotionTypes.title,
-        担当者: v.array(NotionTypes.user),
+        担当者: NotionTypes.user, // 担当者は一人っぽい？
       }),
     }),
   ),
@@ -66,7 +66,7 @@ async function main() {
     .map((result) => {
       const due: string = result.properties.期日.date.start;
       const title: string = result.properties.タイトル.title.map((title) => title.plain_text).join("");
-      const assignee: string = result.properties.担当者.map((u) => u.name).join(", ");
+      const assignee: string = result.properties.担当者.name;
 
       return `・【${due}】${title} (${assignee})`;
     })
