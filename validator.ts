@@ -3,6 +3,7 @@ import * as v from "valibot";
 /*
 API REFERENCE:
 https://developers.notion.com/docs/working-with-databases
+https://developers.notion.com/reference/property-value-object
 */
 
 // S: Schema
@@ -66,13 +67,19 @@ const NotionTitle = v.object({
 
 // API REFERENCE[user]: https://developers.notion.com/reference/user
 const NotionUser = v.object({
-  type: v.union([v.literal("person"), v.literal("bot")]),
-  name: v.string(),
-}); // TODO
+  object: v.literal("user"),
+  id: v.pipe(v.string(), v.uuid()),
+});
+
+const NotionPeople = v.object({
+  type: v.literal("people"),
+  people: v.array(NotionUser),
+});
 
 export const NotionTypes = {
   date: NotionDate,
   text: NotionText,
   title: NotionTitle,
   user: NotionUser,
+  people: NotionPeople,
 };
