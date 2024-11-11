@@ -8,7 +8,6 @@ https://developers.notion.com/docs/working-with-databases
 
 // the url is safe to publish.
 const NOTION_TASK_PAGE_URL = "https://www.notion.so/utcode/e8d7215fb5224be4a9a3e7d3be4d41ff";
-const NOTION_GET_USER = (userId: string) => `https://api.notion.com/v1/users/${userId}`;
 const DAY = 24 * 60 * 60 * 1000;
 
 const query = JSON.stringify({
