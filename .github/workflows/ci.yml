@@ -10,3 +10,9 @@ jobs:
         with:
           bun-version: 1.1.31
       - run: bun ci
+  biome:
+    runs-on: ubuntu-latest
+    steps: 
+      - uses: actions/checkout@v4
+      - uses: biomejs/setup-biome@v2
+      - run: biome check
