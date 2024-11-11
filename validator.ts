@@ -66,13 +66,23 @@ const NotionTitle = v.object({
 
 // API REFERENCE[user]: https://developers.notion.com/reference/user
 const NotionUser = v.object({
-  type: v.union([v.literal("person"), v.literal("bot")]),
+  object: v.literal("user"),
+  id: v.pipe(v.string(), v.uuid()),
+});
+const UserWithName = v.object({
   name: v.string(),
-}); // TODO
+});
+
+const NotionPeople = v.object({
+  type: v.literal("people"),
+  people: v.array(NotionUser),
+});
 
 export const NotionTypes = {
   date: NotionDate,
   text: NotionText,
   title: NotionTitle,
   user: NotionUser,
+  userWithName: UserWithName,
+  people: NotionPeople,
 };

@@ -8,6 +8,7 @@ https://developers.notion.com/docs/working-with-databases
 
 // the url is safe to publish.
 const NOTION_TASK_PAGE_URL = "https://www.notion.so/utcode/e8d7215fb5224be4a9a3e7d3be4d41ff";
+const NOTION_GET_USER = (userId: string) => `https://api.notion.com/v1/users/${userId}`;
 const DAY = 24 * 60 * 60 * 1000;
 
 const query = JSON.stringify({
@@ -41,7 +42,7 @@ const NotionFetchResponse = v.object({
       properties: v.object({
         期日: NotionTypes.date,
         タイトル: NotionTypes.title,
-        担当者: v.any(),
+        担当者: NotionTypes.people,
       }),
     }),
   ),
@@ -62,16 +63,24 @@ async function main() {
 
   const json = tc.check("notion fetch response", await response.json(), NotionFetchResponse);
 
-  const tasks = json.results
-    .map((result) => {
-      const due: string = result.properties.期日.date.start;
-      const title: string = result.properties.タイトル.title.map((title) => title.plain_text).join("");
-      const assignee = "";
-      console.log("assignee: ", JSON.stringify(result.properties.担当者));
+  const promises = json.results.map(async (result) => {
+    const due: string = result.properties.期日.date.start;
+    const title: string = result.properties.タイトル.title.map((title) => title.plain_text).join("");
+    const userId = result.properties.担当者.people[0].id; // todo: 二人以上担当者がいたときの対応は、その時考える。
+    const res = await fetch(NOTION_GET_USER(userId), {
+      headers: {
+        "Notion-Version": "2022-06-28",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.NOTION_API_KEY}`,
+      },
+    });
+    console.log(await res.json());
+    const assignee = tc.check("response of NOTION_GET_USER", await res.json(), NotionTypes.userWithName);
 
-      return `・【${due}】${title} (${assignee})`;
-    })
-    .join("\n");
+    return `・【${due}】${title} (${assignee.name})`;
+  });
+  const tasks = (await Promise.all(promises)).join(",");
+
   let message =
     json.results.length === 0
       ? "本日は期限が迫っているタスクはありませんでした。"
