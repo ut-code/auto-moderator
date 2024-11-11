@@ -67,17 +67,12 @@ async function main() {
     const due: string = result.properties.期日.date.start;
     const title: string = result.properties.タイトル.title.map((title) => title.plain_text).join("");
     const userId = result.properties.担当者.people[0].id; // todo: 二人以上担当者がいたときの対応は、その時考える。
-    const res = await fetch(NOTION_GET_USER(userId), {
-      headers: {
-        "Notion-Version": "2022-06-28",
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.NOTION_API_KEY}`,
-      },
-    });
-    console.log(await res.json());
-    const assignee = tc.check("response of NOTION_GET_USER", await res.json(), NotionTypes.userWithName);
+    const assignee = ""; // todo: ユーザー id -> 名前の対応表を作る
 
-    return `・【${due}】${title} (${assignee.name})`;
+    if (!assignee) {
+      return `・【${due}】${title}`;
+    }
+    return `・【${due}】${title} (${assignee})`;
   });
   const tasks = (await Promise.all(promises)).join(",");
 

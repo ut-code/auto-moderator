@@ -3,6 +3,7 @@ import * as v from "valibot";
 /*
 API REFERENCE:
 https://developers.notion.com/docs/working-with-databases
+https://developers.notion.com/reference/property-value-object
 */
 
 // S: Schema
@@ -69,9 +70,6 @@ const NotionUser = v.object({
   object: v.literal("user"),
   id: v.pipe(v.string(), v.uuid()),
 });
-const UserWithName = v.object({
-  name: v.string(),
-});
 
 const NotionPeople = v.object({
   type: v.literal("people"),
@@ -83,6 +81,5 @@ export const NotionTypes = {
   text: NotionText,
   title: NotionTitle,
   user: NotionUser,
-  userWithName: UserWithName,
   people: NotionPeople,
 };
