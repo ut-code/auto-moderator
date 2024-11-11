@@ -65,8 +65,8 @@ async function main() {
   const promises = json.results.map(async (result) => {
     const due: string = result.properties.期日.date.start;
     const title: string = result.properties.タイトル.title.map((title) => title.plain_text).join("");
-    const userId = result.properties.担当者.people[0].id; // todo: 二人以上担当者がいたときの対応は、その時考える。
-    const assignee = ""; // todo: ユーザー id -> 名前の対応表を作る
+    const userId = result.properties.担当者.people[0].id; // later: 二人以上担当者がいたときの対応は、その時考える。
+    const assignee = ""; // FIXME: ユーザー id から名前を取得できるようにする (e.g. 対応表を作る)
 
     if (!assignee) {
       return `・【${due}】${title}`;
