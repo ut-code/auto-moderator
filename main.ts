@@ -98,11 +98,14 @@ ${tasks}
   });
 }
 
-for (const _ of new Array(3).fill(0)) {
-  try {
-    await main();
-    break;
-  } catch (err) {
-    console.error(err);
+await (async () => {
+  for (const _ of new Array(3).fill(0)) {
+    try {
+      await main();
+      return;
+    } catch (err) {
+      console.error(err);
+    }
   }
-}
+  throw new Error("CI failed 3 times");
+})();

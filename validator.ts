@@ -20,7 +20,7 @@ export function check<S extends v.BaseSchema<unknown, unknown, v.BaseIssue<unkno
   const result = v.safeParse(schema, val);
   if (result.success) return { val: result.output satisfies O };
 
-  const error = result.issues.join(", ");
+  const error = result.issues.map((issue) => issue.message).join(", ");
   console.error(`WARNING: Failed to parse schema of ${varName}: ${error}`);
   return {
     err: error,
