@@ -73,14 +73,14 @@ async function main() {
     }
     return `・【${due}】${title} (${assignee})`;
   });
-  const tasks = (await Promise.all(promises)).join(",");
+  const tasks = await Promise.all(promises);
 
   let message =
     json.results.length === 0
       ? "本日は期限が迫っているタスクはありませんでした。"
       : `
 3日以内に期限が迫っているタスクがあります！
-${tasks}
+${tasks.join("\n")}
 
 完了したら、タスクを対応済みにしてください。
 <<${NOTION_TASK_PAGE_URL}|運営タスク>>
