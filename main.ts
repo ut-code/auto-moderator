@@ -65,13 +65,12 @@ async function main() {
   const promises = json.results.map(async (result) => {
     const due = result.properties.期日?.date.start;
     const title = result.properties.タイトル?.title.map((title) => title.plain_text).join("");
-    const userId = result.properties.担当者?.people[0].id; // later: 二人以上担当者がいたときの対応は、その時考える。
-    const assignee = ""; // FIXME: ユーザー id から名前を取得できるようにする (e.g. 対応表を作る)
+    const assignee = result.properties.担当者?.people[0].name; // later: 二人以上担当者がいたときの対応は、その時考える。
 
     if (!assignee) {
       return `・【${due}】${title}`;
     }
-    return `・【${due}】${title} (${assignee})`;
+    return `・【${due}】${title} # @${assignee}`;
   });
   const tasks = await Promise.all(promises);
 

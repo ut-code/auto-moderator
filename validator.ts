@@ -69,6 +69,7 @@ const NotionTitle = v.object({
 const NotionUser = v.object({
   object: v.literal("user"),
   id: v.pipe(v.string(), v.uuid()),
+  name: v.union([v.string(), v.undefined()]),
 });
 
 const NotionPeople = v.object({
