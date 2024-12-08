@@ -39,9 +39,9 @@ const NotionFetchResponse = v.object({
   results: v.array(
     v.object({
       properties: v.object({
-        期日: NotionTypes.date,
-        タイトル: NotionTypes.title,
-        担当者: NotionTypes.people,
+        期日: v.union([NotionTypes.date, v.undefined()]),
+        タイトル: v.union([NotionTypes.title, v.undefined()]),
+        担当者: v.union([NotionTypes.people, v.undefined()]),
       }),
     }),
   ),
@@ -63,9 +63,9 @@ async function main() {
   const json = tc.check("notion fetch response", await response.json(), NotionFetchResponse);
 
   const promises = json.results.map(async (result) => {
-    const due: string = result.properties.期日.date.start;
-    const title: string = result.properties.タイトル.title.map((title) => title.plain_text).join("");
-    const userId = result.properties.担当者.people[0].id; // later: 二人以上担当者がいたときの対応は、その時考える。
+    const due = result.properties.期日?.date.start;
+    const title = result.properties.タイトル?.title.map((title) => title.plain_text).join("");
+    const userId = result.properties.担当者?.people[0].id; // later: 二人以上担当者がいたときの対応は、その時考える。
     const assignee = ""; // FIXME: ユーザー id から名前を取得できるようにする (e.g. 対応表を作る)
 
     if (!assignee) {
@@ -87,30 +87,42 @@ ${tasks.join("\n")}
 `.trim();
 
   if (tc.hasFailed()) message += `\n---\n 一つ以上の型チェックが失敗しました: ${tc.errors}`;
+  return message;
+}
 
+const result = await retry(3, async () => await main());
+if (typeof result === "string") {
+  await webhook(result);
+} else {
+  await webhook(`Auto Moderator の実行に失敗しました: ${result.message}`);
+}
+
+// lib section
+
+async function retry(count: number, func: () => Promise<string>): Promise<string | Error> {
+  let err: Error = new Error("失敗していません");
+  for (const _ of new Array(count).fill(0)) {
+    try {
+      return await func();
+    } catch (e) {
+      console.error(e);
+      err = e as Error;
+    }
+  }
+  return err;
+}
+
+async function webhook(message: string) {
   // not appending this to messages, as it includes secrets
-  const { err, val: webhook } = check("env SLACK_WEBHOOK_URL", process.env.SLACK_WEBHOOK_URL, Url);
+  const { err, val: webhookURL } = check("env SLACK_WEBHOOK_URL", process.env.SLACK_WEBHOOK_URL, Url);
   if (err) {
     console.error(`Failed to parse webhook. first and last characters are as follows.
-		first: ${webhook.at(0)}
-		last: ${webhook.at(-1)}`);
+		first: ${webhookURL.at(0)}
+		last: ${webhookURL.at(-1)}`);
   }
-
-  await fetch(webhook, {
+  await fetch(webhookURL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text: message }),
   });
 }
-
-await (async () => {
-  for (const _ of new Array(3).fill(0)) {
-    try {
-      await main();
-      return;
-    } catch (err) {
-      console.error(err);
-    }
-  }
-  throw new Error("CI failed 3 times");
-})();
