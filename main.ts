@@ -65,7 +65,7 @@ async function main() {
   const promises = json.results.map(async (result) => {
     const due = result.properties.期日?.date.start;
     const title = result.properties.タイトル?.title.map((title) => title.plain_text).join("");
-    const assignee = result.properties.担当者?.people[0].name; // later: 二人以上担当者がいたときの対応は、その時考える。
+    const assignee = result.properties.担当者?.people.map((person) => person.name).join(" / ");
 
     if (!assignee) {
       return `・【${due}】${title}`;
