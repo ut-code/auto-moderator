@@ -94,6 +94,7 @@ if (typeof result === "string") {
   await webhook(result);
 } else {
   await webhook(`Auto Moderator の実行に失敗しました: ${result.message}`);
+  process.exit(1);
 }
 
 // lib section
