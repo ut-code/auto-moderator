@@ -8,7 +8,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.1.31
+          bun-version: 1.2.5
       - run: bun ci
   biome:
     runs-on: ubuntu-latest
