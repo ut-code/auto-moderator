@@ -10,7 +10,7 @@
   },
   "private": true,
   "scripts": {
-    "start": "bun install --production; bun main.ts",
+    "start": "bun main.ts",
     "ci": "bun install && bunx tsc"
   },
   "type": "module",

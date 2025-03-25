@@ -6,6 +6,12 @@ https://developers.notion.com/docs/working-with-databases
 https://developers.notion.com/reference/property-value-object
 */
 
+export function env(name: string) {
+  const e = process.env[name];
+  if (!e) throw new Error(`Environment variable not found for ${name}`);
+  return e;
+}
+
 // S: Schema
 // never throws error, purely for logging purpose.
 export function check<S extends v.BaseSchema<unknown, unknown, v.BaseIssue<unknown>>>(

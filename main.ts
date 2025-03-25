@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { NotionTypes, TypeChecker, Url, check } from "./validator";
+import { NotionTypes, TypeChecker, Url, check, env } from "./validator";
 
 /*
 API REFERENCE:
@@ -55,7 +55,7 @@ async function main() {
     headers: {
       "Notion-Version": "2022-06-28",
       "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.NOTION_API_KEY}`,
+      Authorization: `Bearer ${env("NOTION_API_KEY")}`,
     },
     body: query,
   });
@@ -114,7 +114,7 @@ async function retry(count: number, func: () => Promise<string>): Promise<string
 
 async function webhook(message: string) {
   // not appending this to messages, as it includes secrets
-  const { err, val: webhookURL } = check("env SLACK_WEBHOOK_URL", process.env.SLACK_WEBHOOK_URL, Url);
+  const { err, val: webhookURL } = check("env DISCORD_WEBHOOK_URL", env("DISCORD_WEBHOOK_URL"), Url);
   if (err) {
     console.error(`Failed to parse webhook. first and last characters are as follows.
 		first: ${webhookURL.at(0)}
@@ -123,6 +123,6 @@ async function webhook(message: string) {
   await fetch(webhookURL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text: message }),
+    body: JSON.stringify({ content: message }),
   });
 }
