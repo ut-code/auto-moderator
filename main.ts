@@ -1,5 +1,6 @@
 import * as v from "valibot";
-import { NotionTypes, TypeChecker, Url, check, env } from "./validator";
+import { queryNotion, retry, webhook } from "./io.ts";
+import { NotionFetchResponse, type Task } from "./validator.ts";
 
 /*
 API REFERENCE:
@@ -10,7 +11,7 @@ https://developers.notion.com/docs/working-with-databases
 const NOTION_TASK_PAGE_URL = "https://www.notion.so/utcode/e8d7215fb5224be4a9a3e7d3be4d41ff";
 const DAY = 24 * 60 * 60 * 1000;
 
-const query = JSON.stringify({
+const query = {
   filter: {
     and: [
       {
@@ -33,60 +34,34 @@ const query = JSON.stringify({
       direction: "ascending",
     },
   ],
-});
+};
 
-const NotionFetchResponse = v.object({
-  results: v.array(
-    v.object({
-      properties: v.object({
-        期日: v.union([NotionTypes.date, v.undefined()]),
-        タイトル: v.union([NotionTypes.title, v.undefined()]),
-        担当者: v.union([NotionTypes.people, v.undefined()]),
-      }),
-    }),
-  ),
-});
+function formatTask(task: Task) {
+  const due = task.properties.期日?.date.start;
+  const title = task.properties.タイトル?.title.map((title) => title.plain_text).join("");
+  const assignee = task.properties.担当者?.people.map((person) => person.name).join(" / @");
 
+  if (!assignee) {
+    return `・【${due}】${title} (担当者不在)`;
+  }
+  return `・【${due}】${title} @${assignee}`;
+}
+/**
+  - @throws on NetworkError and ParseError
+ */
 async function main() {
-  const tc = new TypeChecker();
+  const res = await queryNotion(query);
+  const json = v.parse(NotionFetchResponse, await res.json());
+  const tasks = json.results.map(formatTask);
 
-  const response = await fetch("https://api.notion.com/v1/databases/e8d7215f-b522-4be4-a9a3-e7d3be4d41ff/query", {
-    method: "POST",
-    headers: {
-      "Notion-Version": "2022-06-28",
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${env("NOTION_API_KEY")}`,
-    },
-    body: query,
-  });
-
-  const json = tc.check("notion fetch response", await response.json(), NotionFetchResponse);
-
-  const promises = json.results.map(async (result) => {
-    const due = result.properties.期日?.date.start;
-    const title = result.properties.タイトル?.title.map((title) => title.plain_text).join("");
-    const assignee = result.properties.担当者?.people.map((person) => person.name).join(" / ");
-
-    if (!assignee) {
-      return `・【${due}】${title}`;
-    }
-    return `・【${due}】${title} # @${assignee}`;
-  });
-  const tasks = await Promise.all(promises);
-
-  let message =
-    json.results.length === 0
-      ? "本日は期限が迫っているタスクはありませんでした。"
-      : `
+  if (tasks.length === 0) return "本日は期限が迫っているタスクはありませんでした。";
+  return `
 3日以内に期限が迫っているタスクがあります！
 ${tasks.join("\n")}
 
 完了したら、タスクを対応済みにしてください。
 <${NOTION_TASK_PAGE_URL}>
 `.trim();
-
-  if (tc.hasFailed()) message += `\n---\n 一つ以上の型チェックが失敗しました: ${tc.errors}`;
-  return message;
 }
 
 const result = await retry(3, async () => await main());
@@ -95,34 +70,4 @@ if (typeof result === "string") {
 } else {
   await webhook(`Auto Moderator の実行に失敗しました: ${result.message}`);
   process.exit(1);
-}
-
-// lib section
-
-async function retry(count: number, func: () => Promise<string>): Promise<string | Error> {
-  let err: Error = new Error("失敗していません");
-  for (const _ of new Array(count).fill(0)) {
-    try {
-      return await func();
-    } catch (e) {
-      console.error(e);
-      err = e as Error;
-    }
-  }
-  return err;
-}
-
-async function webhook(message: string) {
-  // not appending this to messages, as it includes secrets
-  const { err, val: webhookURL } = check("env DISCORD_WEBHOOK_URL", env("DISCORD_WEBHOOK_URL"), Url);
-  if (err) {
-    console.error(`Failed to parse webhook. first and last characters are as follows.
-		first: ${webhookURL.at(0)}
-		last: ${webhookURL.at(-1)}`);
-  }
-  await fetch(webhookURL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ content: message }),
-  });
 }

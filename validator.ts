@@ -6,53 +6,6 @@ https://developers.notion.com/docs/working-with-databases
 https://developers.notion.com/reference/property-value-object
 */
 
-export function env(name: string) {
-  const e = process.env[name];
-  if (!e) throw new Error(`Environment variable not found for ${name}`);
-  return e;
-}
-
-// S: Schema
-// never throws error, purely for logging purpose.
-export function check<S extends v.BaseSchema<unknown, unknown, v.BaseIssue<unknown>>>(
-  varName: string,
-  val: unknown,
-  schema: S,
-): {
-  val: v.InferOutput<S>;
-  err?: string;
-} {
-  type O = v.InferOutput<S>; // output
-
-  const result = v.safeParse(schema, val);
-  if (result.success) return { val: result.output satisfies O };
-
-  const error = result.issues.map((issue) => issue.message).join(", ");
-  console.error(`WARNING: Failed to parse schema of ${varName}: ${error}`);
-  return {
-    err: error,
-    val: val as O, // just let it go until it crashes for `cannot access property of undefined` or worse, sends undefined to slack	};
-  };
-}
-
-export class TypeChecker {
-  check<S extends v.BaseSchema<unknown, unknown, v.BaseIssue<unknown>>>(name: string, val: unknown, schema: S) {
-    const { val: parsed, err } = check(name, val, schema);
-    if (err) {
-      this.failedCount++;
-      this.errors += `\n- ${err}`;
-    }
-    return parsed;
-  }
-  failedCount = 0;
-  errors = "";
-  hasFailed() {
-    return this.failedCount > 0;
-  }
-}
-
-export const Url = v.pipe(v.string(), v.url());
-
 const NotionDate = v.object({
   type: v.literal("date"),
   date: v.object({
@@ -90,3 +43,16 @@ export const NotionTypes = {
   user: NotionUser,
   people: NotionPeople,
 };
+
+export const Task = v.object({
+  properties: v.object({
+    期日: v.union([NotionTypes.date, v.undefined()]),
+    タイトル: v.union([NotionTypes.title, v.undefined()]),
+    担当者: v.union([NotionTypes.people, v.undefined()]),
+  }),
+});
+
+export type Task = v.InferOutput<typeof Task>;
+export const NotionFetchResponse = v.object({
+  results: v.array(Task),
+});
