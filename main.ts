@@ -82,7 +82,7 @@ async function main() {
 ${tasks.join("\n")}
 
 完了したら、タスクを対応済みにしてください。
-<[運営タスク]()${NOTION_TASK_PAGE_URL})>
+<${NOTION_TASK_PAGE_URL}>
 `.trim();
 
   if (tc.hasFailed()) message += `\n---\n 一つ以上の型チェックが失敗しました: ${tc.errors}`;
