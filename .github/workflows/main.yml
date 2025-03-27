@@ -5,6 +5,9 @@ on:
 jobs:
   main:
     runs-on: ubuntu-latest
+    env:
+      NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -12,6 +15,3 @@ jobs:
           bun-version: 1.2.5
       - run: bun install --production
       - run: bun start
-    env:
-      NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
-      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}

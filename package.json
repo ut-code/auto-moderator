@@ -1,20 +1,17 @@
 {
   "name": "auto-moderator",
   "version": "1.0.0",
-  "module": "index.ts",
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
-  },
   "private": true,
-  "scripts": {
-    "start": "bun main.ts",
-    "ci": "bun install && bunx tsc"
-  },
   "type": "module",
+  "scripts": {
+    "start": "bun run src/main.ts",
+    "ci": "bun run tsc"
+  },
   "dependencies": {
     "valibot": "^1.0.0-beta.3"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.0.0"
   }
 }
