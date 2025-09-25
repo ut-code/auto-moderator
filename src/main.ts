@@ -1,4 +1,5 @@
 import * as v from "valibot";
+import { nameMap } from "./data.ts";
 import { queryNotion, retry, webhook } from "./io.ts";
 import { NotionFetchResponse, type Task } from "./validator.ts";
 
@@ -36,19 +37,31 @@ const query = {
   ],
 };
 
-function formatTask(task: Task) {
+function formatTask(task: Task): string {
   const due = task.properties.期日?.date.start;
   const title = task.properties.タイトル?.title.map((title) => title.plain_text).join("");
-  const assignee = task.properties.担当者?.people.map((person) => person.name).join(" / @");
+  const assignees = task.properties.担当者?.people.map(
+    (person): { success: true; id: string } | { success: false; display: string } => {
+      if (!person.name) return { success: false, display: "-" };
+      const d_id = nameMap.get(person.name);
+      if (!d_id) return { success: false, display: person.name };
+      return { success: true, id: d_id };
+    },
+  );
+
+  const assignee = assignees
+    ?.map((a) => {
+      if (a.success) return `<@${a.id}>`;
+      return `@${a.display}`;
+    })
+    .join(" ");
 
   if (!assignee) {
     return `・【${due}】${title} (担当者不在)`;
   }
-  return `・【${due}】${title} @${assignee}`;
+  return `・【${due}】${title} ${assignee}`;
 }
-/**
-  - @throws on NetworkError and ParseError
- */
+
 async function main() {
   const res = await queryNotion(query);
   const json = v.parse(NotionFetchResponse, await res.json());
