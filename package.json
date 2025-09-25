@@ -8,10 +8,10 @@
     "ci": "bun run tsc"
   },
   "dependencies": {
-    "valibot": "^1.0.0"
+    "valibot": "^1.1.0"
   },
   "devDependencies": {
-    "@types/bun": "^1.2.11",
-    "typescript": "^5.8.3"
+    "@types/bun": "^1.2.22",
+    "typescript": "^5.9.2"
   }
 }
