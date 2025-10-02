@@ -11,3 +11,5 @@ export const nameMap = new Map<string, `${number}`>([
   // 運営ではないけど運営タスクに名前のある人
   ["川端 悠斗", "943071631167860756"],
 ]);
+
+export const idMap = new Map<string, `${number}`>([]);

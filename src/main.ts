@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { nameMap } from "./data.ts";
+import { idMap, nameMap } from "./data.ts";
 import { queryNotion, retry, webhook } from "./io.ts";
 import { NotionFetchResponse, type Task } from "./validator.ts";
 
@@ -37,44 +37,63 @@ const query = {
   ],
 };
 
-function formatTask(task: Task): string {
+interface FormatTaskReturn {
+  formatted: string;
+  unregistered: { id: string; name?: string }[];
+}
+function formatTask(task: Task): FormatTaskReturn {
   const due = task.properties.期日?.date.start;
   const title = task.properties.タイトル?.title.map((title) => title.plain_text).join("");
-  const assignees = task.properties.担当者?.people.map(
-    (person): { success: true; id: string } | { success: false; display: string } => {
-      if (!person.name) return { success: false, display: "-" };
-      const d_id = nameMap.get(person.name);
-      if (!d_id) return { success: false, display: person.name };
-      return { success: true, id: d_id };
-    },
-  );
 
-  const assignee = assignees
-    ?.map((a) => {
-      if (a.success) return `<@${a.id}>`;
-      return `@${a.display}`;
-    })
-    .join(" ");
+  const unregistered: { id: string; name?: string }[] = [];
 
-  if (!assignee) {
-    return `・【${due}】${title} (担当者不在)`;
-  }
-  return `・【${due}】${title} ${assignee}`;
+  const assignees = task.properties.担当者?.people.map((person) => {
+    const discordIdFromId = idMap.get(person.id);
+    if (discordIdFromId) return `<@${discordIdFromId}>`;
+
+    unregistered.push({ name: person.name, id: person.id });
+
+    if (person.name) {
+      const discordIdFromName = nameMap.get(person.name);
+      if (discordIdFromName) {
+        return `<@${discordIdFromName}>`;
+      } else {
+        return `@${person.name}`;
+      }
+    }
+    return `@${person.id}`;
+  });
+
+  const assignee = assignees?.join(" ");
+  const formatted = assignee ? `・【${due}】${title} ${assignee}` : `・【${due}】${title} (担当者不在)`;
+
+  return { formatted, unregistered };
 }
 
 async function main() {
   const res = await queryNotion(query);
   const json = v.parse(NotionFetchResponse, await res.json());
-  const tasks = json.results.map(formatTask);
+  const taskResults = json.results.map(formatTask);
 
-  if (tasks.length === 0) return "本日は期限が迫っているタスクはありませんでした。";
-  return `
+  if (taskResults.length === 0) return "本日は期限が迫っているタスクはありませんでした。";
+
+  const tasks = taskResults.map((t) => t.formatted);
+  const allUnregistered = taskResults.flatMap((t) => t.unregistered);
+
+  let message = `
 3日以内に期限が迫っているタスクがあります！
 ${tasks.join("\n")}
 
 完了したら、タスクを対応済みにしてください。
 <${NOTION_TASK_PAGE_URL}>
 `.trim();
+
+  if (allUnregistered.length > 0) {
+    message += `\n\n以下のユーザーの Discord ID を登録してください:
+${allUnregistered.map((u) => `\`${u.id}\`: ${u.name}`).join("\n")}`;
+  }
+
+  return message;
 }
 
 const result = await retry(3, async () => await main());
