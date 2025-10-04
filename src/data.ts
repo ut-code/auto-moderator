@@ -1,8 +1,9 @@
+type UUID = ReturnType<typeof crypto.randomUUID>;
+
 // notion name -> discord name
 export const nameMap = new Map<string, `${number}`>([
   // 運営
   ["KOBAYASHI Yuki / 小林", "502798784959479808"],
-  ["Yasumura Takuya / 安村拓也", "1225332719068643424"],
   ["MANABEKaichi", "1119186793099710514"],
   ["Ryuhei TAKANAKA", "905761740665528370"],
   ["Hiroki Oya / 大矢宏輝", "735679928007131213"],
@@ -13,10 +14,13 @@ export const nameMap = new Map<string, `${number}`>([
 ]);
 
 // notion id -> discord id
-export const idMap = new Map<string, `${number}`>([
+export const idMap = new Map<UUID, `${number}`>([
   // 柴山慧一郎
   ["57a59982-d155-41f6-bd2c-17ae71c07b3e", "660420646261489674"],
 
   // 大矢 宏輝
   ["17c5ee7e-e899-48a6-b766-893d42812f99", "735679928007131213"],
+
+  // 安村拓也
+  ["e2584440-8f00-4e2e-98c8-ab1fcc9fd8ca", "1225332719068643424"],
 ]);
